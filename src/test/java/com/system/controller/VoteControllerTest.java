@@ -13,6 +13,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.SpringApplicationConfiguration;
 import org.springframework.boot.test.TestRestTemplate;
 import org.springframework.boot.test.WebIntegrationTest;
@@ -50,6 +51,12 @@ public class VoteControllerTest {
     @Autowired
     private VoteRepository voteRepository;
 
+    @Value("${order.time.hour}")
+    private int orderHour;
+
+    @Value("${order.time.minute}")
+    private int orderMinute;
+
     private RestTemplate restTemplate = new TestRestTemplate(USERNAME, PASSWORD);
 
     @Before
@@ -80,7 +87,11 @@ public class VoteControllerTest {
         userVote.setRestaurant(restaurantRepository.findByName(MC_DONALDS).get());
         ResponseEntity response = restTemplate.postForEntity("http://localhost:8080/vote", userVote, Vote.class);
         assertNotNull(response);
-        assertTrue(response.getStatusCode().equals(HttpStatus.NO_CONTENT));
+        if(LocalTime.now().isBefore(LocalTime.of(orderHour, orderMinute))) {
+            assertTrue(response.getStatusCode().equals(HttpStatus.NO_CONTENT));
+        } else {
+            assertTrue(response.getStatusCode().equals(HttpStatus.BAD_REQUEST));
+        }
     }
 
     @Test
