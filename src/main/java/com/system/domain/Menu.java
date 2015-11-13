@@ -17,6 +17,7 @@ public class Menu extends GenericEntity {
 
     @Size(min = 2, max = 5)
     @ManyToMany(cascade = CascadeType.ALL)
+    private
     Set<Dish> dishes;
 
     @ManyToOne

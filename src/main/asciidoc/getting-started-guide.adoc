@@ -142,7 +142,12 @@ And then post vote the new restaurant:
 include::{snippets}/creating-a-restaurant/9/curl-request.adoc[]
 include::{snippets}/creating-a-restaurant/9/http-response.adoc[]
 
-Finaly our vote should be posted for the new restaurant:
+Finally user's vote should be posted for the new restaurant:
 
 include::{snippets}/creating-a-restaurant/10/curl-request.adoc[]
 include::{snippets}/creating-a-restaurant/10/http-response.adoc[]
+
+In case if user try to vote not within allowed time frame he will receive '400 Bad request':
+
+include::{snippets}/creating-a-restaurant/11/curl-request.adoc[]
+include::{snippets}/creating-a-restaurant/11/http-response.adoc[]

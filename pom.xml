@@ -17,7 +17,7 @@
 
     <properties>
         <java.version>1.8</java.version>
-        <snippetsDirectory>${project.basedir}/build/generated-snippets</snippetsDirectory>
+        <snippetsDirectory>${project.build.directory}/generated-snippets</snippetsDirectory>
     </properties>
 
     <dependencies>
@@ -109,13 +109,13 @@
                 <executions>
                     <execution>
                         <id>copy-resources</id>
-                        <phase>prepare-package</phase>
+                        <phase>package</phase>
                         <goals>
                             <goal>copy-resources</goal>
                         </goals>
                         <configuration>
                             <outputDirectory>
-                                ${project.build.outputDirectory}/static/docs
+                                ${project.basedir}/static/docs
                             </outputDirectory>
                             <resources>
                                 <resource>

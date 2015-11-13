@@ -30,9 +30,9 @@ import static org.mockito.Mockito.when;
 @RunWith(MockitoJUnitRunner.class)
 public class VotingServiceImplTest {
 
-    public static final String MC_DONALDS = "McDonalds";
-    public static final String KFC = "KFC";
-    public static final String USER_1 = "user1";
+    private static final String MC_DONALDS = "McDonalds";
+    private static final String KFC = "KFC";
+    private static final String USER_1 = "user1";
 
     @Mock
     private VoteRepository voteRepository;

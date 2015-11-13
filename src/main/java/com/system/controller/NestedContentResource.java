@@ -10,7 +10,7 @@ public class NestedContentResource<T> extends ResourceSupport {
 	private final Resources<T> nested;
 	
 	public NestedContentResource(Iterable<T> toNest) {
-		this.nested = new Resources<T>(toNest);
+		this.nested = new Resources<>(toNest);
 	}
 
 	@JsonUnwrapped

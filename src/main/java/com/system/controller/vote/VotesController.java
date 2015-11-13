@@ -2,13 +2,10 @@ package com.system.controller.vote;
 
 import com.google.common.base.Preconditions;
 
-import org.hibernate.validator.constraints.NotEmpty;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.hateoas.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -26,16 +23,11 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.Optional;
 
+import com.system.ScheduleConfigurer;
 import com.system.controller.NestedContentResource;
 import com.system.controller.ResourceDoesNotExistException;
-import com.system.controller.menu.MenuInput;
-import com.system.controller.menu.MenuResourceAssembler;
-import com.system.controller.menu.MenusController;
-import com.system.controller.restaurant.RestaurantResourceAssembler;
-import com.system.domain.Menu;
 import com.system.domain.Restaurant;
 import com.system.domain.Vote;
-import com.system.repository.MenuRepository;
 import com.system.repository.RestaurantRepository;
 import com.system.repository.VoteRepository;
 import com.system.service.VotingService;
@@ -57,11 +49,8 @@ public class VotesController {
 
     private final VoteResourceAssembler voteResourceAssembler;
 
-    @Value("${order.time.hour}")
-    private int orderHour;
-
-    @Value("${order.time.minute}")
-    private int orderMinute;
+    @Autowired
+    ScheduleConfigurer scheduleConfigurer;
 
     @Autowired
     private VotingService votingService;
@@ -80,8 +69,10 @@ public class VotesController {
     HttpHeaders create(@RequestBody VoteInput voteInput) {
 
         Preconditions.checkState(
-            LocalTime.now().isBefore(LocalTime.of(orderHour, orderMinute)),
-            String.format("Restaurant selection could not be changed after %1s:%2s", orderHour, orderMinute));
+            LocalTime.now().isBefore(LocalTime.of(scheduleConfigurer.getOrderHour(),
+                                                  scheduleConfigurer.getOrderMinute())),
+            String.format("Restaurant selection could not be changed after %1s:%2s",
+                          scheduleConfigurer.getOrderHour(), scheduleConfigurer.getOrderMinute()));
 
 
         //begin of day
@@ -111,7 +102,7 @@ public class VotesController {
 
     @RequestMapping(method = RequestMethod.GET)
     NestedContentResource<VoteResourceAssembler.VoteResource> all() {
-        return new NestedContentResource<VoteResourceAssembler.VoteResource>(
+        return new NestedContentResource<>(
             this.voteResourceAssembler.toResources(this.voteRepository.findAll()));
     }
 

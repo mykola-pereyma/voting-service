@@ -67,7 +67,7 @@ public class MenusController {
 
     @RequestMapping(method = RequestMethod.GET)
     NestedContentResource<MenuResource> all() {
-        return new NestedContentResource<MenuResource>(
+        return new NestedContentResource<>(
             this.menuResourceAssembler.toResources(this.repository.findAll()));
     }
 

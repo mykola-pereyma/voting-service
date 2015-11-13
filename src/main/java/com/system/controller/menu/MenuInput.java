@@ -12,9 +12,10 @@ import javax.validation.constraints.Size;
 public class MenuInput {
 
     @Size(min = 2, max = 5)
+    private final
     Set<Dish> dishes;
 
-    private URI restaurantUri;
+    private final URI restaurantUri;
 
     public URI getRestaurantUri() {
         return restaurantUri;

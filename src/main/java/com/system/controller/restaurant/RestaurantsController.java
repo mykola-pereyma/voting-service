@@ -68,7 +68,7 @@ public class RestaurantsController {
         for(Restaurant restaurant: restaurants){
             restaurant.setTodayMenu(menuRepository.findTopByRestaurantOrderByCreatedDesc(restaurant));
         }
-        return new NestedContentResource<RestaurantResource>(
+        return new NestedContentResource<>(
             this.restaurantResourceAssembler.toResources(restaurants));
     }
 
@@ -80,7 +80,7 @@ public class RestaurantsController {
 
     @RequestMapping(value = "/{id}/menus", method = RequestMethod.GET)
     ResourceSupport restaurantMenus(@PathVariable("id") long id) {
-        return new NestedContentResource<MenuResource>(
+        return new NestedContentResource<>(
             this.menuResourceAssembler.toResources(menuRepository.findByRestaurant(findRestaurantById(id))));
     }
 

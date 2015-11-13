@@ -6,6 +6,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.JsonPath;
 import com.system.Application;
+import com.system.ScheduleConfigurer;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -47,10 +48,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class GettingStartedDocumentation {
 
     @Rule
-    public final RestDocumentation restDocumentation = new RestDocumentation("build/generated-snippets");
+    public final RestDocumentation restDocumentation = new RestDocumentation("target/generated-snippets");
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private ScheduleConfigurer scheduleConfigurer;
 
     @Autowired
     private WebApplicationContext context;
@@ -65,6 +69,8 @@ public class GettingStartedDocumentation {
                                preprocessRequest(prettyPrint()),
                                preprocessResponse(prettyPrint())))
             .build();
+        scheduleConfigurer.setOrderHour(23);
+        scheduleConfigurer.setOrderMinute(59);
     }
 
     @Test
@@ -77,37 +83,51 @@ public class GettingStartedDocumentation {
 
     @Test
     @WithMockUser(username = "user1")
-    public void creatingARestaurant() throws JsonProcessingException, Exception {
+    public void creatingARestaurant() throws Exception {
         String restaurantLocation = createRestaurant("Tasty Food");
         MvcResult restaurant = getRestaurant(restaurantLocation);
 
         String menuLocation = createMenu(restaurantLocation);
         MvcResult menu = getMenu(menuLocation);
 
-        restaurant = getRestaurant(getLink(menu, "menu-restaurant"));
+        MvcResult updatedRestaurant = getRestaurant(getLink(menu, "menu-restaurant"));
 
-        getMenus(getLink(restaurant, "restaurant-menus"));
+        getMenus(getLink(updatedRestaurant, "restaurant-menus"));
         postingVote(restaurantLocation);
         String newRestaurantLocation = createRestaurant("Super Tasty Food");
         String voteLocation = postingVote(newRestaurantLocation);
         getVote(voteLocation);
+        postingOutdatedVote(restaurantLocation);
     }
 
     private String postingVote(String restaurantLocation) throws Exception {
-        Map<String, String> vote = new HashMap<String, String>();
+        Map<String, String> vote = new HashMap<>();
         vote.put("restaurantUri", restaurantLocation);
 
-        String voteLocation = this.mockMvc
+        return this.mockMvc
             .perform(
                 post("/votes").contentType(MediaTypes.HAL_JSON).content(
                     objectMapper.writeValueAsString(vote)))
             .andExpect(status().isAccepted())
             .andExpect(header().string("Location", notNullValue()))
             .andReturn().getResponse().getHeader("Location");
-        return voteLocation;
     }
 
-    MvcResult getVote(String voteLocation) throws Exception {
+    private void postingOutdatedVote(String restaurantLocation) throws Exception {
+        Map<String, String> vote = new HashMap<>();
+        vote.put("restaurantUri", restaurantLocation);
+
+        scheduleConfigurer.setOrderHour(0);
+        scheduleConfigurer.setOrderMinute(0);
+
+        this.mockMvc
+            .perform(
+                post("/votes").contentType(MediaTypes.HAL_JSON).content(
+                    objectMapper.writeValueAsString(vote)))
+            .andExpect(status().isBadRequest());
+    }
+
+    private MvcResult getVote(String voteLocation) throws Exception {
         return this.mockMvc.perform(get(voteLocation))
             .andExpect(status().isOk())
             .andExpect(jsonPath("userName", is(notNullValue())))
@@ -115,57 +135,55 @@ public class GettingStartedDocumentation {
             .andReturn();
     }
 
-    String createRestaurant(String name) throws Exception {
-        Map<String, String> restaurant = new HashMap<String, String>();
+    private String createRestaurant(String name) throws Exception {
+        Map<String, String> restaurant = new HashMap<>();
         restaurant.put("name", name);
 
-        String restaurantLocation = this.mockMvc
+        return this.mockMvc
             .perform(
                 post("/restaurants").contentType(MediaTypes.HAL_JSON).content(
                     objectMapper.writeValueAsString(restaurant)))
             .andExpect(status().isCreated())
             .andExpect(header().string("Location", notNullValue()))
             .andReturn().getResponse().getHeader("Location");
-        return restaurantLocation;
     }
 
-    MvcResult getRestaurant(String restarantLocation) throws Exception {
-        return this.mockMvc.perform(get(restarantLocation))
+    private MvcResult getRestaurant(String restaurantLocation) throws Exception {
+        return this.mockMvc.perform(get(restaurantLocation))
             .andExpect(status().isOk())
             .andExpect(jsonPath("name", is(notNullValue())))
             .andExpect(jsonPath("_links.restaurant-menus", is(notNullValue())))
             .andReturn();
     }
 
-    String createMenu(final String restaurantLocation) throws Exception, JsonProcessingException {
-        Map<String, Object> menu = new HashMap<String, Object>();
+    private String createMenu(final String restaurantLocation) throws Exception {
+        Map<String, Object> menu = new HashMap<>();
         menu.put("restaurant", restaurantLocation);
-        Map<String, String> dish1Map = new HashMap<String, String>();
+        Map<String, String> dish1Map = new HashMap<>();
         dish1Map.put("name", "dish1");
         dish1Map.put("price", Long.toString(10));
-        Map<String, String> dish2Map = new HashMap<String, String>();
+        Map<String, String> dish2Map = new HashMap<>();
         dish2Map.put("name", "dish2");
         dish2Map.put("price", Long.toString(20));
         menu.put("dishes", Sets.newHashSet(dish1Map, dish2Map));
 
-        String menuLocation = this.mockMvc
+        return this.mockMvc
             .perform(
                 post("/menus").contentType(MediaTypes.HAL_JSON).content(
                     objectMapper.writeValueAsString(menu)))
             .andExpect(status().isCreated())
             .andExpect(header().string("Location", notNullValue()))
             .andReturn().getResponse().getHeader("Location");
-        return menuLocation;
     }
 
-    MvcResult getMenu(String menuLocation) throws Exception {
+    private MvcResult getMenu(String menuLocation) throws Exception {
         return this.mockMvc.perform(get(menuLocation)).andExpect(status().isOk())
             .andExpect(jsonPath("dishes", is(notNullValue())))
             .andExpect(jsonPath("_links.menu-restaurant", is(notNullValue())))
             .andReturn();
     }
 
-    void getMenus(String restaurantMenusLocation) throws Exception {
+    private void getMenus(String restaurantMenusLocation) throws Exception {
         this.mockMvc.perform(get(restaurantMenusLocation))
             .andExpect(status().isOk())
             .andExpect(jsonPath("_embedded.menus", hasSize(1)));

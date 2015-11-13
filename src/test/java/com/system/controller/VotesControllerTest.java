@@ -1,7 +1,7 @@
 package com.system.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.system.Application;
+import com.system.ScheduleConfigurer;
 import com.system.controller.vote.VoteInput;
 import com.system.domain.Restaurant;
 import com.system.domain.Vote;
@@ -10,27 +10,19 @@ import com.system.repository.VoteRepository;
 
 import junit.framework.TestCase;
 
-import org.apache.tomcat.util.codec.binary.Base64;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.SpringApplicationConfiguration;
 import org.springframework.boot.test.TestRestTemplate;
 import org.springframework.boot.test.WebIntegrationTest;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.restdocs.RestDocumentation;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.context.WebApplicationContext;
 
 import java.net.HttpRetryException;
 import java.net.URI;
@@ -42,10 +34,6 @@ import java.util.Optional;
 
 import static junit.framework.TestCase.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
-import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.documentationConfiguration;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
  * Created by mpereyma on 10/20/15.
@@ -65,13 +53,10 @@ public class VotesControllerTest {
     @Autowired
     private VoteRepository voteRepository;
 
-    @Value("${order.time.hour}")
-    private int orderHour;
+    @Autowired
+    ScheduleConfigurer scheduleConfigurer;
 
-    @Value("${order.time.minute}")
-    private int orderMinute;
-
-    private RestTemplate restTemplate = new TestRestTemplate(USERNAME, PASSWORD);
+    private final RestTemplate restTemplate = new TestRestTemplate(USERNAME, PASSWORD);
 
     @Before
     public void setUp() {
@@ -100,7 +85,7 @@ public class VotesControllerTest {
         VoteInput voteInput = new VoteInput(new URI("http://localhost:8080/restaurants/" + restaurant.getId()));
         ResponseEntity response = restTemplate.postForEntity("http://localhost:8080/votes", voteInput, Vote.class);
         assertNotNull(response);
-        if(LocalTime.now().isBefore(LocalTime.of(orderHour, orderMinute))) {
+        if(LocalTime.now().isBefore(LocalTime.of(scheduleConfigurer.getOrderHour(), scheduleConfigurer.getOrderMinute()))) {
             assertTrue(response.getStatusCode().equals(HttpStatus.ACCEPTED));
         } else {
             assertTrue(response.getStatusCode().equals(HttpStatus.BAD_REQUEST));
