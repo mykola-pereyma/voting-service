@@ -18,4 +18,5 @@ public interface VoteRepository extends CrudRepository<Vote, Long> {
     Optional<Vote> findFirstVoteByUserNameAndCreatedGreaterThan(
         final String userName, final Date created);
 
+    Vote findById(long id);
 }

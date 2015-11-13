@@ -1,6 +1,8 @@
 package com.system.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.system.Application;
+import com.system.controller.vote.VoteInput;
 import com.system.domain.Restaurant;
 import com.system.domain.Vote;
 import com.system.repository.RestaurantRepository;
@@ -8,8 +10,10 @@ import com.system.repository.VoteRepository;
 
 import junit.framework.TestCase;
 
+import org.apache.tomcat.util.codec.binary.Base64;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,12 +22,18 @@ import org.springframework.boot.test.SpringApplicationConfiguration;
 import org.springframework.boot.test.TestRestTemplate;
 import org.springframework.boot.test.WebIntegrationTest;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.restdocs.RestDocumentation;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.context.WebApplicationContext;
 
 import java.net.HttpRetryException;
+import java.net.URI;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -32,6 +42,10 @@ import java.util.Optional;
 
 import static junit.framework.TestCase.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
+import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.documentationConfiguration;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
  * Created by mpereyma on 10/20/15.
@@ -39,7 +53,7 @@ import static org.junit.Assert.assertTrue;
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringApplicationConfiguration(classes = Application.class)
 @WebIntegrationTest
-public class VoteControllerTest {
+public class VotesControllerTest {
 
     public static final String MC_DONALDS = "McDonalds";
     public static final String USERNAME = "user1";
@@ -75,20 +89,19 @@ public class VoteControllerTest {
             voteRepository.delete(vote.get());
         }
 
-        Optional<Restaurant> restaurantOptional = restaurantRepository.findByName(MC_DONALDS);
-        assertTrue(restaurantOptional.isPresent());
-        Restaurant restaurant = restaurantOptional.get();
+        Restaurant restaurant = restaurantRepository.findByName(MC_DONALDS);
+        assertTrue(restaurant != null);
         restaurantRepository.delete(restaurant);
     }
 
     @Test
     public void testVoteForRestaurant() throws Exception {
-        Vote userVote = new Vote();
-        userVote.setRestaurant(restaurantRepository.findByName(MC_DONALDS).get());
-        ResponseEntity response = restTemplate.postForEntity("http://localhost:8080/vote", userVote, Vote.class);
+        Restaurant restaurant = restaurantRepository.findByName(MC_DONALDS);
+        VoteInput voteInput = new VoteInput(new URI("http://localhost:8080/restaurants/" + restaurant.getId()));
+        ResponseEntity response = restTemplate.postForEntity("http://localhost:8080/votes", voteInput, Vote.class);
         assertNotNull(response);
         if(LocalTime.now().isBefore(LocalTime.of(orderHour, orderMinute))) {
-            assertTrue(response.getStatusCode().equals(HttpStatus.NO_CONTENT));
+            assertTrue(response.getStatusCode().equals(HttpStatus.ACCEPTED));
         } else {
             assertTrue(response.getStatusCode().equals(HttpStatus.BAD_REQUEST));
         }
@@ -96,11 +109,11 @@ public class VoteControllerTest {
 
     @Test
     public void testVoteForRestaurantNotAuthentificated() throws Exception {
-        Vote userVote = new Vote();
-        userVote.setRestaurant(restaurantRepository.findByName(MC_DONALDS).get());
+        Restaurant restaurant = restaurantRepository.findByName(MC_DONALDS);
+        VoteInput voteInput = new VoteInput(new URI("http://localhost:8080/restaurants/" + restaurant.getId()));
         RestTemplate restTemplateNoAuth = new TestRestTemplate("user1", "wrong");
         try {
-            restTemplateNoAuth.postForEntity("http://localhost:8080/vote", userVote, Vote.class);
+            restTemplateNoAuth.postForEntity("http://localhost:8080/votes", voteInput, Vote.class);
         } catch (ResourceAccessException e) {
             TestCase.assertEquals(((HttpRetryException) e.getCause()).responseCode(), HttpStatus.UNAUTHORIZED.value());
         }
@@ -108,8 +121,8 @@ public class VoteControllerTest {
 
     @Test
     public void testVoteWithNoRestaurant() throws Exception {
-        Vote userVote = new Vote();
-        ResponseEntity response = restTemplate.postForEntity("http://localhost:8080/vote", userVote, Vote.class);
+        VoteInput voteInput = new VoteInput(null);
+        ResponseEntity response = restTemplate.postForEntity("http://localhost:8080/votes", voteInput, Vote.class);
         assertNotNull(response);
         assertTrue(response.getStatusCode().equals(HttpStatus.BAD_REQUEST));
     }
@@ -118,7 +131,7 @@ public class VoteControllerTest {
     public void testVoteForNonExistingRestaurant() throws Exception {
         Vote userVote = new Vote();
         userVote.setRestaurant(new Restaurant());
-        ResponseEntity response = restTemplate.postForEntity("http://localhost:8080/vote", userVote, Vote.class);
+        ResponseEntity response = restTemplate.postForEntity("http://localhost:8080/votes", userVote, Vote.class);
         assertNotNull(response);
         assertTrue(response.getStatusCode().equals(HttpStatus.BAD_REQUEST));
     }

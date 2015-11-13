@@ -1,14 +1,24 @@
 package com.system.repository;
 
-import org.springframework.data.repository.CrudRepository;
-import org.springframework.data.rest.core.annotation.RepositoryRestResource;
-
 import com.system.domain.Menu;
+import com.system.domain.Restaurant;
+
+import org.springframework.data.repository.CrudRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.Collection;
 
 /**
  * Created by mpereyma on 10/15/15.
  */
-@RepositoryRestResource(collectionResourceRel = "menu", path = "menu")
+@Repository("menu")
 public interface MenuRepository extends CrudRepository<Menu, Long> {
+
+    Menu findById(long id);
+
+    Collection<Menu> findByRestaurant(Restaurant Restaurant);
+
+    Menu findTopByRestaurantOrderByCreatedDesc(Restaurant Restaurant);
+
 
 }

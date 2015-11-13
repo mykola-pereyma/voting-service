@@ -1,0 +1,148 @@
+= Voting Service Getting Started Guide
+:doctype: book
+:icons: font
+:source-highlighter: highlightjs
+:toc: left
+:toclevels: 4
+:sectlinks:
+
+[introduction]
+= Introduction
+
+Voting service is a RESTful web service for restaurants voting and creating restaurants with menus. It uses hypermedia
+to describe the relationships between resources and to allow navigation between them.
+
+[getting-started]
+= Getting started
+
+
+
+[getting-started-running-the-service]
+== Running the service
+Voting Service is written using http://projects.spring.io/spring-boot[Spring Boot] which
+makes it easy to get it up and running so that you can start exploring the REST API.
+
+The first step is to clone the Git repository:
+
+[source,bash]
+----
+$ git clone https://github.com/mykola-pereyma/voting-service
+----
+
+Once the clone is complete, you're ready to get the service up and running:
+
+[source,bash]
+----
+$ mvn package
+$ java -jar target/voting-service-1.0-SNAPSHOT.jar
+----
+
+You can check that the service is up and running by executing a simple request using
+cURL:
+
+include::{snippets}/index/1/curl-request.adoc[]
+
+This request should yield the following response:
+
+include::{snippets}/index/1/http-response.adoc[]
+
+Note the `_links` in the JSON response. They are key to navigating the API.
+
+
+
+[getting-started-creating-a-restaurant]
+== Creating a restaurant
+Now that you've started the service and verified that it works, the next step is to use
+it to create a new restaurant. As you saw above, the URI for working with restaurant is included as
+a link when you perform a `GET` request against the root of the service:
+
+include::{snippets}/index/1/http-response.adoc[]
+
+To create a restaurant you need to execute a `POST` request to this URI, including a JSON
+payload containing the name of the restaurant:
+
+include::{snippets}/creating-a-restaurant/1/curl-request.adoc[]
+
+The response from this request should have a status code of `201 Created` and contain a
+`Location` header whose value is the URI of the newly created restaurant:
+
+include::{snippets}/creating-a-restaurant/1/http-response.adoc[]
+
+To work with the newly created restaurant you use the URI in the `Location` header. For example
+you can access the restaurants's details by performing a `GET` request:
+
+include::{snippets}/creating-a-restaurant/2/curl-request.adoc[]
+
+This request will produce a response with the restaurants's details in its body:
+
+include::{snippets}/creating-a-restaurant/2/http-response.adoc[]
+
+Note the `restaurant-menus` link which we'll make use of later.
+
+
+
+[getting-started-creating-a-menu]
+== Creating a menu
+Menus should be always associated with specific restaurants and contains two to five userName.
+
+Referring back to the response for the service's index, the URI for working with menus is
+include as a link:
+
+include::{snippets}/index/1/http-response.adoc[]
+
+To create a menu you need to execute a `POST` request to this URI, including a JSON
+payload containing the collection of userName and uri to related restaurant:
+
+include::{snippets}/creating-a-restaurant/3/curl-request.adoc[]
+
+The response from this request should have a status code of `201 Created` and contain a
+`Location` header whose value is the URI of the newly created menu:
+
+include::{snippets}/creating-a-restaurant/3/http-response.adoc[]
+
+To work with the newly created menu you use the URI in the `Location` header. For example
+you can access the menu's details by performing a `GET` request:
+
+include::{snippets}/creating-a-restaurant/4/curl-request.adoc[]
+
+This request will produce a response with the menu's details in its body:
+
+include::{snippets}/creating-a-restaurant/4/http-response.adoc[]
+
+From get link "menu-restaurant" we can navigate to the related restaurant
+and observe that menu has been added and visible as today menu:
+
+include::{snippets}/creating-a-restaurant/5/curl-request.adoc[]
+
+include::{snippets}/creating-a-restaurant/5/http-response.adoc[]
+
+We can see all menus of the restaurant if we go and GET by link 'restaurant-menus':
+
+include::{snippets}/creating-a-restaurant/6/curl-request.adoc[]
+include::{snippets}/creating-a-restaurant/6/http-response.adoc[]
+
+
+
+[getting-started-voting-for-restaurant]
+== Voting for restaurant
+Users can vote for the specific restaurant by sending POST request:
+
+include::{snippets}/creating-a-restaurant/7/curl-request.adoc[]
+
+This request should produce a `202 Accepted` response:
+
+include::{snippets}/creating-a-restaurant/7/http-response.adoc[]
+
+Lets create new restaurant:
+
+include::{snippets}/creating-a-restaurant/8/curl-request.adoc[]
+include::{snippets}/creating-a-restaurant/8/http-response.adoc[]
+
+And then post vote the new restaurant:
+include::{snippets}/creating-a-restaurant/9/curl-request.adoc[]
+include::{snippets}/creating-a-restaurant/9/http-response.adoc[]
+
+Finaly our vote should be posted for the new restaurant:
+
+include::{snippets}/creating-a-restaurant/10/curl-request.adoc[]
+include::{snippets}/creating-a-restaurant/10/http-response.adoc[]

@@ -2,6 +2,9 @@ package com.system.domain;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.JoinColumn;
+import javax.persistence.OneToMany;
+import javax.persistence.Transient;
 
 /**
  * Created by mpereyma on 10/15/15.
@@ -12,9 +15,10 @@ public class Restaurant extends GenericEntity {
     @Column(unique = true, nullable = false)
     private String name;
 
-    public Restaurant(){
+    @Transient
+    private Menu todayMenu;
 
-    }
+    public Restaurant(){}
 
     public Restaurant(final long id){
         super(id);
@@ -55,5 +59,13 @@ public class Restaurant extends GenericEntity {
         result = 31 * result + (name != null ? name.hashCode() : 0);
         result = 31 * result + (created != null ? created.hashCode() : 0);
         return result;
+    }
+
+    public void setTodayMenu(Menu todayMenu) {
+        this.todayMenu = todayMenu;
+    }
+
+    public Menu getTodayMenu() {
+        return todayMenu;
     }
 }

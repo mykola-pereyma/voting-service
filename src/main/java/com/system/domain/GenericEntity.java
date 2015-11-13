@@ -1,5 +1,7 @@
 package com.system.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -25,9 +27,7 @@ public abstract class GenericEntity {
     @CreatedDate
     protected Date created;
 
-    public GenericEntity(){
-
-    }
+    public GenericEntity(){}
 
     public GenericEntity(final long id){
         this.id = id;
